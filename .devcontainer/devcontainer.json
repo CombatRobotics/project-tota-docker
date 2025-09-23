@@ -1,5 +1,5 @@
 {
-    "name": "ROS 2 Humble + Gazebo Harmonic + gz_ros2_control",
+    "name": "TOTA ROS2 Development Container",
     "build": {
         "dockerfile": "Dockerfile",
         "context": ".",
@@ -9,7 +9,9 @@
             "GZ_ROS2_CONTROL_WS": "/opt/gz_ros2_control_ws",
             "INSTALL_CLAUDE": "true",
             "ROS_DOMAIN_ID": "0",
-            "ROS_LOCALHOST_ONLY": "0"
+            "ROS_LOCALHOST_ONLY": "0",
+            "INSTALL_ROCM": "false",
+            "INSTALL_WFB": "false"
         }
     },
 
@@ -21,7 +23,9 @@
         "--privileged",
         "--ipc=host",
         "--pid=host",
-        "--gpus=all"
+        "--gpus=all",
+        "--device=/dev/dri",
+        "--device=/dev/bus/usb"
     ],
 
     "containerEnv": {
@@ -30,18 +34,44 @@
         "NVIDIA_VISIBLE_DEVICES": "all",
         "NVIDIA_DRIVER_CAPABILITIES": "all",
         "__GLX_VENDOR_LIBRARY_NAME": "nvidia",
-        "LIBGL_ALWAYS_SOFTWARE": "0"
+        "LIBGL_ALWAYS_SOFTWARE": "0",
+        "RMW_IMPLEMENTATION": "rmw_cyclonedds_cpp",
+        "PROJECT_TOTA_PATH": "/ros2_ws/project_tota",
+        "HSA_OVERRIDE_GFX_VERSION": "11.0.2",
+        "PYTHONDONTWRITEBYTECODE": "1"
     },
 
     "mounts": [
         "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached",
         "source=/dev/dri,target=/dev/dri,type=bind",
-        "source=claude-config,target=/root/.config/claude,type=volume"
+        "source=claude-config,target=/root/.config/claude,type=volume",
+        "source=tota-venv,target=/ros2_ws/project_tota/rocm_venv,type=volume",
+        "source=tota-controller-ws,target=/ros2_ws/project_tota/ws/controller_ws,type=volume"
     ],
 
-    "postCreateCommand": "sudo apt-get update && echo 'DevContainer setup complete - ROS2 Humble + Gazebo Harmonic + gz_ros2_control ready!'",
+    "postCreateCommand": "/ros2_ws/project_tota/.devcontainer/scripts/post-create.sh",
 
-    "postStartCommand": "touch ~/.Xauthority && xhost +local:root 2>/dev/null || true",
+    "postStartCommand": "/ros2_ws/project_tota/.devcontainer/scripts/post-start.sh",
+
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-vscode.cpptools",
+                "ms-vscode.cmake-tools",
+                "twxs.cmake",
+                "ms-iot.vscode-ros",
+                "smilerobotics.urdf",
+                "yzhang.markdown-all-in-one",
+                "redhat.vscode-xml",
+                "redhat.vscode-yaml"
+            ],
+            "settings": {
+                "python.defaultInterpreterPath": "/ros2_ws/project_tota/rocm_venv/bin/python",
+                "ros.distro": "humble"
+            }
+        }
+    },
 
     "remoteUser": "root"
 }

@@ -3,56 +3,87 @@
 ARG BASE_IMAGE=ghcr.io/combatrobotics/ros-humble-gz-base:latest
 FROM ${BASE_IMAGE}
 
+# Build arguments - these rarely change
 ARG WORKSPACE_PATH=/ros2_ws/project_tota
 ARG GZ_ROS2_CONTROL_WS=/opt/gz_ros2_control_ws
 ARG INSTALL_CLAUDE=true
 ARG ROS_DOMAIN_ID=0
 ARG ROS_LOCALHOST_ONLY=0
+ARG INSTALL_ROCM=false
+ARG INSTALL_WFB=false
 
-# Copy packages list
+# ============================================
+# LAYER 1: System Dependencies (rarely changes)
+# ============================================
+COPY scripts/install-system-deps.sh /tmp/
+RUN --mount=type=cache,target=/var/cache/apt \
+    chmod +x /tmp/install-system-deps.sh && \
+    /tmp/install-system-deps.sh && \
+    rm -f /tmp/install-system-deps.sh
+
+# ============================================
+# LAYER 2: GStreamer Dependencies (rarely changes)
+# ============================================
+COPY scripts/install-gstreamer.sh /tmp/
+RUN --mount=type=cache,target=/var/cache/apt \
+    chmod +x /tmp/install-gstreamer.sh && \
+    /tmp/install-gstreamer.sh && \
+    rm -f /tmp/install-gstreamer.sh
+
+# ============================================
+# LAYER 3: ROS2 Dependencies (occasionally changes)
+# ============================================
 COPY packages.txt /tmp/packages.txt
-
-# Install all packages from packages.txt
-# Simply comment/uncomment lines in packages.txt to control what gets installed
+COPY scripts/install-ros-packages.sh /tmp/
 RUN --mount=type=cache,target=/var/cache/apt \
-    apt-get update && \
-    DEBIAN_FRONTEND=noninteractive grep -v '^#' /tmp/packages.txt | grep -v '^$' | \
-    xargs -r apt-get install -y --no-install-recommends \
-    && rm -rf /var/lib/apt/lists/* /tmp/packages.txt
+    chmod +x /tmp/install-ros-packages.sh && \
+    /tmp/install-ros-packages.sh && \
+    rm -f /tmp/install-ros-packages.sh /tmp/packages.txt
 
-# Claude AI Assistant (Optional)
+# ============================================
+# LAYER 4: Optional Components (conditional)
+# ============================================
+COPY scripts/install-optional.sh /tmp/
 RUN --mount=type=cache,target=/var/cache/apt \
-    if [ "$INSTALL_CLAUDE" = "true" ]; then \
-    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
-    apt-get install -y nodejs && \
-    npm install -g @anthropic-ai/claude-code && \
-    rm -rf /var/lib/apt/lists/*; \
-    fi
+    chmod +x /tmp/install-optional.sh && \
+    INSTALL_CLAUDE="${INSTALL_CLAUDE}" \
+    INSTALL_ROCM="${INSTALL_ROCM}" \
+    INSTALL_WFB="${INSTALL_WFB}" \
+    /tmp/install-optional.sh && \
+    rm -f /tmp/install-optional.sh
 
-# Workspace Setup
-RUN mkdir -p ${WORKSPACE_PATH}
+# ============================================
+# LAYER 5: Python Dependencies (changes with requirements.txt)
+# ============================================
+COPY requirements.txt /tmp/requirements.txt
+COPY scripts/install-python-deps.sh /tmp/
+RUN chmod +x /tmp/install-python-deps.sh && \
+    /tmp/install-python-deps.sh && \
+    rm -f /tmp/install-python-deps.sh /tmp/requirements.txt
 
-# Environment Configuration (extends base image environment)
-RUN echo "" >> ~/.bashrc && \
-    echo "# Workspace paths" >> ~/.bashrc && \
-    echo "export GZ_SIM_RESOURCE_PATH=${GZ_ROS2_CONTROL_WS}/install/share:${WORKSPACE_PATH}/install/share:${WORKSPACE_PATH}/src:\$GZ_SIM_RESOURCE_PATH" >> ~/.bashrc && \
-    echo "" >> ~/.bashrc && \
-    echo "# Source local workspace if it exists" >> ~/.bashrc && \
-    echo "if [ -f ${WORKSPACE_PATH}/install/setup.bash ]; then" >> ~/.bashrc && \
-    echo "    source ${WORKSPACE_PATH}/install/setup.bash" >> ~/.bashrc && \
-    echo "fi" >> ~/.bashrc && \
-    echo "" >> ~/.bashrc && \
-    echo "# ROS configuration" >> ~/.bashrc && \
-    echo "export ROS_DOMAIN_ID=${ROS_DOMAIN_ID}" >> ~/.bashrc && \
-    echo "export ROS_LOCALHOST_ONLY=${ROS_LOCALHOST_ONLY}" >> ~/.bashrc && \
-    echo "" >> ~/.bashrc && \
-    echo "# Display configuration" >> ~/.bashrc && \
-    echo "export DISPLAY=\${DISPLAY:-:0}" >> ~/.bashrc && \
-    echo "export QT_X11_NO_MITSHM=1" >> ~/.bashrc && \
-    echo "export QT_QPA_PLATFORM=xcb" >> ~/.bashrc && \
-    echo "" >> ~/.bashrc && \
-    echo "# Build configuration (for reference)" >> ~/.bashrc && \
-    echo "export INSTALL_CLAUDE=${INSTALL_CLAUDE}" >> ~/.bashrc
+# ============================================
+# LAYER 6: Workspace Structure (rarely changes)
+# ============================================
+RUN mkdir -p ${WORKSPACE_PATH} \
+    && mkdir -p ${WORKSPACE_PATH}/ws/controller_ws/src \
+    && mkdir -p ${WORKSPACE_PATH}/rocm_venv \
+    && mkdir -p ${WORKSPACE_PATH}/.devcontainer/scripts \
+    && mkdir -p ${WORKSPACE_PATH}/.devcontainer/config
+
+# ============================================
+# LAYER 7: Environment Setup (rarely changes)
+# ============================================
+COPY scripts/setup-environment.sh /tmp/
+RUN chmod +x /tmp/setup-environment.sh && \
+    INSTALL_ROCM="${INSTALL_ROCM}" \
+    /tmp/setup-environment.sh && \
+    rm -f /tmp/setup-environment.sh
+
+# ============================================
+# LAYER 8: Runtime Scripts (changes frequently)
+# ============================================
+COPY scripts/*.sh ${WORKSPACE_PATH}/.devcontainer/scripts/
+RUN chmod +x ${WORKSPACE_PATH}/.devcontainer/scripts/*
 
 WORKDIR ${WORKSPACE_PATH}
 
