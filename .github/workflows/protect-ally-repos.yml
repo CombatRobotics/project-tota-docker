@@ -1,0 +1,109 @@
+name: Protect ally.repos from PR Changes
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    
+jobs:
+  protect-ally-repos:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }}
+          
+      - name: Setup branch info
+        id: branch
+        run: |
+          echo "source=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
+          echo "target=${{ github.event.pull_request.base.ref }}" >> $GITHUB_OUTPUT
+          echo "Source branch: ${{ github.event.pull_request.head.ref }}"
+          echo "Target branch: ${{ github.event.pull_request.base.ref }}"
+          
+      - name: Check if ally.repos was modified
+        id: check
+        run: |
+          FILE_PATH="repos/ally.repos"
+          TARGET_BRANCH="${{ steps.branch.outputs.target }}"
+          
+          # Fetch the target branch
+          git fetch origin "$TARGET_BRANCH"
+          
+          # Check if file was modified compared to target branch
+          if git diff "origin/$TARGET_BRANCH" HEAD --name-only | grep -q "^$FILE_PATH$"; then
+            echo "modified=true" >> $GITHUB_OUTPUT
+            echo "File $FILE_PATH was modified in this PR"
+            
+            # Show the diff for logging
+            echo "Changes detected:"
+            git diff "origin/$TARGET_BRANCH" HEAD -- "$FILE_PATH" | head -20
+          else
+            echo "modified=false" >> $GITHUB_OUTPUT
+            echo "File $FILE_PATH was not modified"
+          fi
+          
+      - name: Revert ally.repos to target branch version
+        if: steps.check.outputs.modified == 'true'
+        run: |
+          FILE_PATH="repos/ally.repos"
+          TARGET_BRANCH="${{ steps.branch.outputs.target }}"
+          
+          echo "Reverting $FILE_PATH to match $TARGET_BRANCH branch"
+          
+          # Check if file exists in target branch
+          if git show "origin/$TARGET_BRANCH:$FILE_PATH" > /dev/null 2>&1; then
+            # Restore file from target branch
+            git show "origin/$TARGET_BRANCH:$FILE_PATH" > "$FILE_PATH"
+            echo "File restored from $TARGET_BRANCH branch"
+          else
+            # File doesn't exist in target branch
+            if [ -f "$FILE_PATH" ]; then
+              echo "File doesn't exist in $TARGET_BRANCH, removing it"
+              git rm "$FILE_PATH"
+            fi
+          fi
+          
+          # Stage changes
+          git add -A
+          
+      - name: Commit and push changes
+        if: steps.check.outputs.modified == 'true'
+        run: |
+          git config --local user.name 'github-actions[bot]'
+          git config --local user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          # Check if there are changes to commit
+          if ! git diff --staged --quiet; then
+            git commit -m "Auto-protect: Revert repos/ally.repos to match target branch [skip ci]"
+            git push
+            
+            echo "Successfully reverted ally.repos to match the target branch"
+          else
+            echo "No changes to commit after revert"
+          fi
+          
+      - name: Add PR comment
+        if: steps.check.outputs.modified == 'true'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const comment = ` **Protected File Notice**
+            
+            The file \`repos/ally.repos\` is protected and cannot be modified through pull requests.
+            The file has been automatically reverted to match the target branch (\`${{ steps.branch.outputs.target }}\`).
+            
+            If you need to modify this file, please use direct commits to the branch instead of pull requests.`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

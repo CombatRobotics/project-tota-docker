@@ -1,0 +1,45 @@
+repositories:
+  tota_control:
+    type: git
+    url: git@github.com:CombatRobotics/tota_control.git
+    version: main
+
+  tota_controller_core:
+    type: git
+    url: git@github.com:CombatRobotics/tota_controller_core.git
+    version: main
+
+  tota_mavlink:
+    type: git
+    url: git@github.com:CombatRobotics/tota_mavlink.git
+    version: main
+  
+  tota_localization:
+    type: git
+    url: git@github.com:CombatRobotics/tota_localization.git
+    version: main
+  
+  tota_interfaces:
+    type: git
+    url: git@github.com:CombatRobotics/tota_interfaces.git
+    version: main
+  
+  tota_ui:
+    type: git
+    url: git@github.com:CombatRobotics/tota_ui.git
+    version: main
+
+  tota_video_tools:
+    type: git
+    url: git@github.com:CombatRobotics/tota_video_tools.git
+    version: main
+
+  tota_autonomy:
+    type: git
+    url: git@github.com:CombatRobotics/tota_autonomy.git
+    version: main
+
+  tota_description:
+    type: git
+    url: git@github.com:CombatRobotics/tota_description.git
+    version: main

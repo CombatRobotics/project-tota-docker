@@ -1,0 +1,15 @@
+[Unit]
+Description=Tota Controller Launch Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=%h/.tota_startup/start_controller.sh
+Restart=on-failure
+RestartSec=5
+Environment=DISPLAY=:0
+StandardOutput=file://%h/.tota_startup/robot-output.txt
+StandardError=file://%h/.tota_startup/robot-error.txt
+
+[Install]
+WantedBy=default.target

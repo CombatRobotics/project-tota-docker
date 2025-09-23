@@ -1,3 +1,11 @@
+# Project Tota
+gs_ws/*
+ws/*
+device_info.yaml
+*.deb
+*venv/
+robot_config.yaml
+
 # Docker
 *.tar
 *.tar.gz

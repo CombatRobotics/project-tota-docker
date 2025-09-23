@@ -1,0 +1,12 @@
+# Core dependencies with specific versions
+insightface==0.7.3
+numpy==1.24.2
+opencv-contrib-python==4.11.0.86
+opencv-python==4.11.0.86
+pyserial==3.5
+
+# Object Detection
+ultralytics==8.3.172
+
+# Mavlink
+pymavlink

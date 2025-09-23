@@ -1,0 +1,1 @@
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", ATTRS{serial}=="397932523133", SYMLINK+="arista_mci", MODE="0666", GROUP="dialout"
