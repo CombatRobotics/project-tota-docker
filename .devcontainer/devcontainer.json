@@ -1,0 +1,47 @@
+{
+    "name": "ROS 2 Humble + Gazebo Harmonic + gz_ros2_control",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": ".",
+        "args": {
+            "BASE_IMAGE": "ghcr.io/combatrobotics/ros-humble-gz-base:latest",
+            "WORKSPACE_PATH": "/ros2_ws/project_tota",
+            "GZ_ROS2_CONTROL_WS": "/opt/gz_ros2_control_ws",
+            "INSTALL_CLAUDE": "true",
+            "ROS_DOMAIN_ID": "0",
+            "ROS_LOCALHOST_ONLY": "0"
+        }
+    },
+
+    "workspaceFolder": "/ros2_ws/project_tota",
+    "workspaceMount": "source=${localWorkspaceFolder},target=/ros2_ws/project_tota,type=bind",
+
+    "runArgs": [
+        "--network=host",
+        "--privileged",
+        "--ipc=host",
+        "--pid=host",
+        "--gpus=all"
+    ],
+
+    "containerEnv": {
+        "DISPLAY": "${localEnv:DISPLAY}",
+        "GZ_VERSION": "harmonic",
+        "NVIDIA_VISIBLE_DEVICES": "all",
+        "NVIDIA_DRIVER_CAPABILITIES": "all",
+        "__GLX_VENDOR_LIBRARY_NAME": "nvidia",
+        "LIBGL_ALWAYS_SOFTWARE": "0"
+    },
+
+    "mounts": [
+        "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached",
+        "source=/dev/dri,target=/dev/dri,type=bind",
+        "source=claude-config,target=/root/.config/claude,type=volume"
+    ],
+
+    "postCreateCommand": "sudo apt-get update && echo 'DevContainer setup complete - ROS2 Humble + Gazebo Harmonic + gz_ros2_control ready!'",
+
+    "postStartCommand": "touch ~/.Xauthority && xhost +local:root 2>/dev/null || true",
+
+    "remoteUser": "root"
+}
