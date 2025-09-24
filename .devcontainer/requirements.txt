@@ -1,0 +1,32 @@
+# Core Dependencies
+numpy==1.24.3
+scipy>=1.10.0
+matplotlib>=3.7.0
+
+# Build Tools - Fixed versions for ROS2 compatibility
+setuptools<76
+packaging==23.2
+
+# Computer Vision
+opencv-python==4.11.0.86
+insightface==0.7.3
+ultralytics==8.3.172
+
+# Communication
+pyserial==3.5
+pymavlink>=2.4.40
+
+# ROS2 Utilities
+transforms3d>=0.4.1
+pyyaml>=6.0
+catkin-pkg>=0.5.0
+
+# Development
+pytest>=7.4.0
+black>=23.0.0
+flake8>=6.0.0
+ipython>=8.14.0
+
+# Utilities
+tqdm>=4.65.0
+requests>=2.31.0

@@ -1,17 +1,11 @@
 {
-    "name": "TOTA ROS2 Development Container",
+    "name": "TOTA ROS2 Development",
     "build": {
         "dockerfile": "Dockerfile",
         "context": ".",
         "args": {
             "BASE_IMAGE": "ghcr.io/combatrobotics/ros-humble-gz-base:latest",
-            "WORKSPACE_PATH": "/ros2_ws/project_tota",
-            "GZ_ROS2_CONTROL_WS": "/opt/gz_ros2_control_ws",
-            "INSTALL_CLAUDE": "true",
-            "ROS_DOMAIN_ID": "0",
-            "ROS_LOCALHOST_ONLY": "0",
-            "INSTALL_ROCM": "false",
-            "INSTALL_WFB": "false"
+            "INSTALL_CLAUDE": "true"
         }
     },
 
@@ -21,36 +15,35 @@
     "runArgs": [
         "--network=host",
         "--privileged",
-        "--ipc=host",
-        "--pid=host",
         "--gpus=all",
         "--device=/dev/dri",
-        "--device=/dev/bus/usb"
+        "--device=/dev/kfd",
+        "--group-add=video",
+        "--ipc=host",
+        "--shm-size=16g",
+        "--cap-add=SYS_PTRACE",
+        "--security-opt=seccomp=unconfined"
     ],
 
     "containerEnv": {
         "DISPLAY": "${localEnv:DISPLAY}",
-        "GZ_VERSION": "harmonic",
-        "NVIDIA_VISIBLE_DEVICES": "all",
-        "NVIDIA_DRIVER_CAPABILITIES": "all",
-        "__GLX_VENDOR_LIBRARY_NAME": "nvidia",
-        "LIBGL_ALWAYS_SOFTWARE": "0",
         "RMW_IMPLEMENTATION": "rmw_cyclonedds_cpp",
-        "PROJECT_TOTA_PATH": "/ros2_ws/project_tota",
+        "CYCLONEDDS_URI": "file:///ros2_ws/project_tota/cyclonedds.xml",
         "HSA_OVERRIDE_GFX_VERSION": "11.0.2",
-        "PYTHONDONTWRITEBYTECODE": "1"
+        "ROCR_VISIBLE_DEVICES": "${localEnv:ROCR_VISIBLE_DEVICES}",
+        "HIP_VISIBLE_DEVICES": "${localEnv:HIP_VISIBLE_DEVICES}"
     },
 
     "mounts": [
-        "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached",
-        "source=/dev/dri,target=/dev/dri,type=bind",
-        "source=claude-config,target=/root/.config/claude,type=volume",
-        "source=tota-venv,target=/ros2_ws/project_tota/rocm_venv,type=volume",
-        "source=tota-controller-ws,target=/ros2_ws/project_tota/ws/controller_ws,type=volume"
+        "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind",
+        "source=/dev,target=/dev,type=bind",
+        "source=tota-claude-config,target=/root/.config/claude,type=volume",
+        "source=tota-claude-data,target=/root/.local/share/claude,type=volume",
+        "source=tota-claude-cache,target=/root/.cache/claude,type=volume",
+        "source=tota-bash-history,target=/root/.bash_history_persistent,type=volume"
     ],
 
     "postCreateCommand": "/ros2_ws/project_tota/.devcontainer/scripts/post-create.sh",
-
     "postStartCommand": "/ros2_ws/project_tota/.devcontainer/scripts/post-start.sh",
 
     "customizations": {
@@ -58,16 +51,10 @@
             "extensions": [
                 "ms-python.python",
                 "ms-vscode.cpptools",
-                "ms-vscode.cmake-tools",
-                "twxs.cmake",
-                "ms-iot.vscode-ros",
-                "smilerobotics.urdf",
-                "yzhang.markdown-all-in-one",
-                "redhat.vscode-xml",
-                "redhat.vscode-yaml"
+                "ms-iot.vscode-ros"
             ],
             "settings": {
-                "python.defaultInterpreterPath": "/ros2_ws/project_tota/rocm_venv/bin/python",
+                "python.defaultInterpreterPath": "/usr/bin/python3",
                 "ros.distro": "humble"
             }
         }

@@ -1,21 +1,134 @@
 #!/bin/bash
-# Post-create: Initialize container
+# Post-create: Initialize container with ROS2 workspace and repositories
 
 set -e
 
-# Source ROS environment
-source /opt/ros/humble/setup.bash
+# Constants
+WORKSPACE="/ros2_ws/project_tota"
+CONTROLLER_WS="${WORKSPACE}/ws/controller_ws"
+ROS_DISTRO="humble"
 
-# Run workspace setup
-/ros2_ws/project_tota/.devcontainer/scripts/workspace-setup.sh all
+echo "=== Initializing ROS2 Development Environment ==="
+
+# Ensure Claude persistence
+if [ -f "${WORKSPACE}/.devcontainer/scripts/preserve-claude.sh" ]; then
+    ${WORKSPACE}/.devcontainer/scripts/preserve-claude.sh
+fi
+
+# Initialize rosdep if needed
+if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then
+    echo "Initializing rosdep..."
+    sudo rosdep init || true
+fi
+
+# Update rosdep
+echo "Updating rosdep..."
+rosdep update --rosdistro ${ROS_DISTRO} || true
+
+# Import repositories from ally.repos if it exists
+if [ -f "${WORKSPACE}/repos/ally.repos" ]; then
+    echo "Importing repositories from ally.repos..."
+    mkdir -p "${CONTROLLER_WS}/src"
+    cd "${CONTROLLER_WS}/src"
+
+    # Check if vcs is installed
+    if ! command -v vcs &> /dev/null; then
+        echo "Installing vcstool..."
+        sudo apt-get update && sudo apt-get install -y python3-vcstool
+    fi
+
+    # Import repositories
+    vcs import --recursive < "${WORKSPACE}/repos/ally.repos" || true
+
+    # Install dependencies and build controller workspace
+    cd "${CONTROLLER_WS}"
+    echo "Installing dependencies for controller workspace..."
+    rosdep install --from-paths src --ignore-src -r -y || true
+
+    echo "Building controller workspace..."
+    source /opt/ros/humble/setup.bash
+    # Ensure correct package versions for colcon build
+    pip3 install "setuptools<76" "packaging==23.2" --quiet
+    colcon build --symlink-install || true
+fi
+
+# Install dependencies for main workspace if src exists
+if [ -d "${WORKSPACE}/src" ] && [ "$(ls -A ${WORKSPACE}/src 2>/dev/null)" ]; then
+    echo "Installing ROS dependencies for main workspace..."
+    cd ${WORKSPACE}
+    rosdep install --from-paths src --ignore-src -r -y || true
+
+    echo "Building main workspace..."
+    source /opt/ros/humble/setup.bash
+    [ -f "${CONTROLLER_WS}/install/setup.bash" ] && source "${CONTROLLER_WS}/install/setup.bash"
+    # Ensure correct package versions for colcon build
+    pip3 install "setuptools<76" "packaging==23.2" --quiet
+    colcon build --symlink-install || true
+fi
+
+# Setup Cyclone DDS configuration
+if [ ! -f "${WORKSPACE}/cyclonedds.xml" ]; then
+    echo "Creating Cyclone DDS configuration..."
+    cat > "${WORKSPACE}/cyclonedds.xml" << 'EOF'
+<?xml version="1.0" encoding="UTF-8" ?>
+<CycloneDDS xmlns="https://cdds.io/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://cdds.io/config https://raw.githubusercontent.com/eclipse-cyclonedds/cyclonedds/master/etc/cyclonedds.xsd">
+    <Domain id="any">
+        <General>
+            <Interfaces>
+                <NetworkInterface name="lo" priority="default" multicast="true" />
+            </Interfaces>
+        </General>
+    </Domain>
+</CycloneDDS>
+EOF
+fi
 
 # Setup udev rules if present
-if [ -f /ros2_ws/project_tota/setup/tota-tx.rules ]; then
-    sudo cp /ros2_ws/project_tota/setup/tota-tx.rules /etc/udev/rules.d/
-    sudo udevadm control --reload-rules
+if [ -f "${WORKSPACE}/setup/tota-tx.rules" ]; then
+    echo "Setting up udev rules..."
+    sudo mkdir -p /etc/udev/rules.d/
+    sudo cp "${WORKSPACE}/setup/tota-tx.rules" /etc/udev/rules.d/
+    sudo udevadm control --reload-rules || true
 fi
 
 # Add user to dialout group for serial access
-groups | grep -q dialout || sudo usermod -a -G dialout $(whoami)
+if ! groups | grep -q dialout; then
+    echo "Adding user to dialout group..."
+    sudo usermod -a -G dialout $(whoami)
+fi
 
-echo "DevContainer initialization complete"
+# Create render group if it doesn't exist (for GPU access)
+if ! getent group render > /dev/null 2>&1; then
+    echo "Creating render group..."
+    sudo groupadd -f render
+fi
+
+# Add user to render group for GPU access
+if ! groups | grep -q render; then
+    echo "Adding user to render group..."
+    sudo usermod -a -G render $(whoami)
+fi
+
+# Create Python virtual environment with ROCm support if requested
+if [ "${SETUP_ROCM_VENV:-false}" = "true" ]; then
+    echo "Creating ROCm Python virtual environment..."
+    VENV_DIR="${WORKSPACE}/rocm_venv"
+    python3 -m venv --system-site-packages "$VENV_DIR"
+    source "$VENV_DIR/bin/activate"
+
+    pip install --upgrade pip
+    # Install compatible setuptools for ROS2
+    pip install "setuptools<76" "packaging==23.2"
+
+    # Install PyTorch with ROCm support
+    pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/rocm6.2
+    pip install onnxruntime-rocm || true
+
+    # Install requirements if they exist
+    [ -f "${WORKSPACE}/.devcontainer/requirements.txt" ] && pip install -r "${WORKSPACE}/.devcontainer/requirements.txt"
+
+    echo "ROCm virtual environment created at: $VENV_DIR"
+    echo "Activate with: source $VENV_DIR/bin/activate"
+fi
+
+echo "DevContainer initialization complete!"

@@ -1,153 +1,33 @@
-# ========================================
-# TOTA-SPECIFIC ROS2 PACKAGES
-# ========================================
-# Note: Base image already includes core ROS2, Gazebo, and ros2_control packages
+# Essential ROS2 packages
 
-# Additional visualization tools
-ros-humble-plotjuggler-ros
-ros-humble-rqt-common-plugins
-
-# Navigation and SLAM (not in base)
+# Navigation & SLAM
 ros-humble-navigation2
 ros-humble-nav2-bringup
 ros-humble-slam-toolbox
+ros-humble-robot-localization
 
-# Motion planning
-ros-humble-moveit
-
-# Teleop packages
+# Teleoperation
 ros-humble-teleop-twist-keyboard
 ros-humble-teleop-twist-joy
+ros-humble-twist-mux
+ros-humble-joy
 
-# Perception and vision
-ros-humble-pcl-ros
-ros-humble-perception-pcl
-ros-humble-laser-geometry
-ros-humble-image-pipeline
+# Perception
 ros-humble-vision-opencv
-ros-humble-image-transport-plugins
-ros-humble-compressed-image-transport
-ros-humble-depth-image-proc
-ros-humble-stereo-image-proc
+ros-humble-usb-cam
 
-# Additional diagnostics
+# Diagnostics
 ros-humble-diagnostic-aggregator
-ros-humble-diagnostic-analysis
-ros-humble-diagnostic-common-diagnostics
 
-# Transform tools
-ros-humble-tf-transformations
+# Web interface (use available packages)
+ros-humble-rosbridge-msgs
+ros-humble-rosapi
+ros-humble-rosapi-msgs
 
-# Real-time tools
-ros-humble-realtime-tools
-ros-humble-control-toolbox
-
-# Joint state GUI
+# Joint state publisher (use available package)
+ros-humble-joint-state-publisher
 ros-humble-joint-state-publisher-gui
 
-# ========================================
-# DEVELOPMENT TOOLS
-# ========================================
-
-# Text editors
-vim
-nano
-neovim
-
-# System monitoring
-htop
-iotop
-iftop
-net-tools
-iputils-ping
-usbutils
-
-# Debugging tools
-gdb
-valgrind
-strace
-ltrace
-
-# Python development (additional)
-python3-all-dev
-
-# ========================================
-# TOTA-SPECIFIC DEPENDENCIES
-# ========================================
-
-# Serial communication
-python3-serial
-python3-pyserial
-setserial
-
-# MAVLink support
-python3-future
-python3-lxml
-
-# USB and device management
-udev
-libudev-dev
-
-# Compression and archives
-zip
-unzip
-tar
-bzip2
-xz-utils
-
-# Additional system libraries
-software-properties-common
-apt-transport-https
-locales
-
-# WFB dependencies (when INSTALL_WFB=true)
-dkms
-fakeroot
-debhelper
-python3-twisted
-libpcap-dev
-python3-pyroute2
-python3-configparser
-libsodium-dev
-
-# Performance and profiling
-linux-tools-generic
-linux-cloud-tools-generic
-
-# Documentation
-doxygen
-graphviz
-
-# Terminal utilities
-tmux
-screen
-tree
-ncdu
-
-# File system tools
-rsync
-sshfs
-
-# Process management
-supervisor
-
-# ========================================
-# OPTIONAL - Uncomment as needed
-# ========================================
-
-# Joystick support
-# joystick
-# jstest-gtk
-# ros-humble-joy
-# ros-humble-joy-teleop
-
-# Camera support
-# v4l-utils
-# ros-humble-usb-cam
-# ros-humble-camera-calibration
-
-# GPS support
-# gpsd
-# gpsd-clients
-# ros-humble-gpsd-client
-# ros-humble-gps-tools
+# DDS Middleware
+ros-humble-cyclonedds
+ros-humble-rmw-cyclonedds-cpp

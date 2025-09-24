@@ -49,17 +49,6 @@ Edit `.devcontainer/packages.txt` to add/remove Ubuntu packages. Packages are or
 - Development tools
 - Optional hardware support
 
-## Available Commands
-
-After container startup, these aliases are available:
-
-- `tota_build` - Build main TOTA workspace
-- `controller_build` - Build controller workspace
-- `activate_ml` - Activate ML virtual environment
-- `ros2_deps` - Install ROS2 dependencies
-- `ros2_build` - Build current ROS2 workspace
-- `ros2_clean` - Clean build/install/log directories
-
 ## Manual Setup Tasks
 
 Run additional setup using the setup script:
@@ -96,6 +85,17 @@ The container manages two ROS2 workspaces:
 - Set `INSTALL_ROCM=true` in devcontainer.json
 - Requires ROCm drivers on host
 - HSA_OVERRIDE_GFX_VERSION is pre-configured
+
+## Build Status
+
+The container build process includes:
+1. Base system dependencies installation
+2. GStreamer components for video streaming
+3. ROS2 packages from packages.txt
+4. Optional components (Claude, ROCm, WFB)
+5. Python dependencies from requirements.txt
+6. Workspace structure creation
+7. Environment configuration
 
 ## Troubleshooting
 
