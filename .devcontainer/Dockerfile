@@ -24,12 +24,13 @@ RUN mkdir -p ${WORKSPACE_PATH}/.devcontainer/scripts
 
 # Copy all build-time files to workspace
 COPY packages.txt requirements.txt ${WORKSPACE_PATH}/.devcontainer/
-COPY scripts/install-deps.sh scripts/setup-python-env.sh ${WORKSPACE_PATH}/.devcontainer/scripts/
+COPY scripts/install-deps.sh scripts/setup-python-env.sh scripts/setup-wfb.sh ${WORKSPACE_PATH}/.devcontainer/scripts/
 
 # Run installation scripts
 RUN chmod +x ${WORKSPACE_PATH}/.devcontainer/scripts/*.sh && \
     ${WORKSPACE_PATH}/.devcontainer/scripts/install-deps.sh && \
-    ${WORKSPACE_PATH}/.devcontainer/scripts/setup-python-env.sh
+    ${WORKSPACE_PATH}/.devcontainer/scripts/setup-python-env.sh && \
+    ${WORKSPACE_PATH}/.devcontainer/scripts/setup-wfb.sh
 
 # Create additional workspace directories
 RUN mkdir -p ${WORKSPACE_PATH}/{src,logs,data}
