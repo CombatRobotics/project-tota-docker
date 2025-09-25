@@ -1,35 +1,61 @@
 #!/bin/bash
 # Script to ensure Claude configuration persists across rebuilds
 
-echo "Checking Claude persistence setup..."
+# Function to save Claude configuration
+save_claude() {
+    echo "Saving Claude configuration..."
+    if [ -d ~/.claude ]; then
+        rm -rf /root/.config/claude/.claude 2>/dev/null || true
+        cp -r ~/.claude /root/.config/claude/.claude
+        echo "✓ Claude configuration saved to volume"
+    else
+        echo "⚠ No Claude configuration found to save"
+    fi
+}
 
-# Create necessary directories if they don't exist
-mkdir -p /root/.config/claude
-mkdir -p /root/.local/share/claude
-mkdir -p /root/.cache/claude
+# Function to restore Claude configuration
+restore_claude() {
+    echo "Restoring Claude configuration..."
+    if [ -d "/root/.config/claude/.claude" ]; then
+        rm -rf ~/.claude 2>/dev/null || true
+        cp -r /root/.config/claude/.claude ~/.claude 2>/dev/null || true
+        echo "✓ Claude configuration restored from volume"
+    else
+        echo "⚠ No Claude configuration found in volume"
+    fi
+}
 
-# Check if volumes are properly mounted
-if mount | grep -q "tota-claude-config"; then
-    echo "✓ Claude config volume mounted"
-else
-    echo "⚠ Claude config volume not found"
-fi
+# Main logic
+case "${1:-check}" in
+    save)
+        save_claude
+        ;;
+    restore)
+        restore_claude
+        ;;
+    *)
+        echo "Checking Claude persistence setup..."
 
-if mount | grep -q "tota-claude-data"; then
-    echo "✓ Claude data volume mounted"
-else
-    echo "⚠ Claude data volume not found"
-fi
+        # Create necessary directories if they don't exist
+        mkdir -p /root/.config/claude
+        mkdir -p /root/.local/share/claude
+        mkdir -p /root/.cache/claude
 
-if mount | grep -q "tota-claude-cache"; then
-    echo "✓ Claude cache volume mounted"
-else
-    echo "⚠ Claude cache volume not found"
-fi
+        # Check if volumes are properly mounted
+        if mount | grep -q "tota-claude-config"; then
+            echo "✓ Claude config volume mounted"
+        else
+            echo "⚠ Claude config volume not found"
+        fi
 
-# Set proper permissions
-chown -R root:root /root/.config/claude 2>/dev/null || true
-chown -R root:root /root/.local/share/claude 2>/dev/null || true
-chown -R root:root /root/.cache/claude 2>/dev/null || true
+        # Set proper permissions
+        chown -R root:root /root/.config/claude 2>/dev/null || true
+        chown -R root:root /root/.local/share/claude 2>/dev/null || true
+        chown -R root:root /root/.cache/claude 2>/dev/null || true
 
-echo "Claude persistence check complete"
+        # Try to restore if available
+        restore_claude
+
+        echo "Claude persistence check complete"
+        ;;
+esac

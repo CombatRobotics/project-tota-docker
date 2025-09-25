@@ -3,7 +3,27 @@
     "allow": [
       "Bash(bash:*)",
       "Bash(chmod:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(source:*)",
+      "Bash(ros2:*)",
+      "Bash(printenv)",
+      "Bash(pip3 check:*)",
+      "Bash(pip3 install:*)",
+      "Bash(rm:*)",
+      "Bash(colcon build:*)",
+      "Bash(colcon test:*)",
+      "Bash(colcon test-result:*)",
+      "Bash(xmllint:*)",
+      "Bash(python3:*)",
+      "Bash(rosdep check:*)",
+      "Bash(sudo apt-get install:*)",
+      "Bash(printenv:*)",
+      "Read(//root/.config/claude/**)",
+      "Read(//root/.claude/**)",
+      "Bash(/ros2_ws/project_tota/.devcontainer/scripts/preserve-claude.sh:*)",
+      "Bash(/ros2_ws/project_tota/.devcontainer/scripts/setup-python-env.sh:*)",
+      "Bash(pip3 list:*)",
+      "Read(//usr/**)"
     ],
     "deny": [],
     "ask": []

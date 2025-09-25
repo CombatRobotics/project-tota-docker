@@ -10,7 +10,7 @@ ROS_DISTRO="humble"
 
 echo "=== Initializing ROS2 Development Environment ==="
 
-# Ensure Claude persistence
+# Ensure Claude persistence (will check and restore)
 if [ -f "${WORKSPACE}/.devcontainer/scripts/preserve-claude.sh" ]; then
     ${WORKSPACE}/.devcontainer/scripts/preserve-claude.sh
 fi
@@ -49,6 +49,12 @@ if [ -f "${WORKSPACE}/repos/ally.repos" ]; then
     source /opt/ros/humble/setup.bash
     # Ensure correct package versions for colcon build
     pip3 install "setuptools<76" "packaging==23.2" --quiet
+
+    # Set numpy include path for ROS2 interface compilation
+    export NUMPY_INCLUDE_PATH="/usr/local/lib/python3.10/dist-packages/numpy/core/include"
+    export CFLAGS="-I${NUMPY_INCLUDE_PATH}"
+    export CPPFLAGS="-I${NUMPY_INCLUDE_PATH}"
+
     colcon build --symlink-install || true
 fi
 
@@ -63,6 +69,12 @@ if [ -d "${WORKSPACE}/src" ] && [ "$(ls -A ${WORKSPACE}/src 2>/dev/null)" ]; the
     [ -f "${CONTROLLER_WS}/install/setup.bash" ] && source "${CONTROLLER_WS}/install/setup.bash"
     # Ensure correct package versions for colcon build
     pip3 install "setuptools<76" "packaging==23.2" --quiet
+
+    # Set numpy include path for ROS2 interface compilation
+    export NUMPY_INCLUDE_PATH="/usr/local/lib/python3.10/dist-packages/numpy/core/include"
+    export CFLAGS="-I${NUMPY_INCLUDE_PATH}"
+    export CPPFLAGS="-I${NUMPY_INCLUDE_PATH}"
+
     colcon build --symlink-install || true
 fi
 
@@ -109,26 +121,17 @@ if ! groups | grep -q render; then
     sudo usermod -a -G render $(whoami)
 fi
 
-# Create Python virtual environment with ROCm support if requested
-if [ "${SETUP_ROCM_VENV:-false}" = "true" ]; then
-    echo "Creating ROCm Python virtual environment..."
-    VENV_DIR="${WORKSPACE}/rocm_venv"
-    python3 -m venv --system-site-packages "$VENV_DIR"
-    source "$VENV_DIR/bin/activate"
-
-    pip install --upgrade pip
-    # Install compatible setuptools for ROS2
-    pip install "setuptools<76" "packaging==23.2"
-
-    # Install PyTorch with ROCm support
-    pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/rocm6.2
-    pip install onnxruntime-rocm || true
-
-    # Install requirements if they exist
-    [ -f "${WORKSPACE}/.devcontainer/requirements.txt" ] && pip install -r "${WORKSPACE}/.devcontainer/requirements.txt"
-
-    echo "ROCm virtual environment created at: $VENV_DIR"
-    echo "Activate with: source $VENV_DIR/bin/activate"
+# Setup comprehensive Python environment for TOTA
+echo "Setting up Python environment for TOTA project..."
+if [ -f "${WORKSPACE}/.devcontainer/scripts/setup-python-env.sh" ]; then
+    echo "Running comprehensive Python dependency installation..."
+    bash "${WORKSPACE}/.devcontainer/scripts/setup-python-env.sh"
+else
+    echo "Python environment script not found, installing basic dependencies..."
+    pip3 install --root-user-action=ignore --no-cache-dir "setuptools<76" "packaging==23.2"
+    if [ -f "${WORKSPACE}/.devcontainer/requirements.txt" ]; then
+        pip3 install --root-user-action=ignore --no-cache-dir -r "${WORKSPACE}/.devcontainer/requirements.txt"
+    fi
 fi
 
 echo "DevContainer initialization complete!"

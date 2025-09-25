@@ -1,6 +1,7 @@
 #!/bin/bash
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repo_root="$(cd "$script_dir/.." && pwd)"
 
 # Exit on error
 set -e
@@ -14,7 +15,7 @@ fi
 # Function to ensure branches match ally.repos
 ensure_branches() {
     local ws_dir=$1
-    local repos_file="${repo_root}/repos/ally.repos"
+    local repos_file="${script_dir}/ally.repos"
     
     if [ ! -f "$repos_file" ]; then
         echo "Warning: ally.repos file not found, skipping branch check"
@@ -88,7 +89,7 @@ update_device() {
     # Check for uncommitted changes in workspace
     # Temporarily disable exit on error since check_changes.sh returns 1 when changes exist
     set +e
-    "${repo_root}/check_changes.sh"
+    "${script_dir}/check_changes.sh"
     has_local_changes=$?
     set -e
 

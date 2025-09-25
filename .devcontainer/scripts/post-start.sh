@@ -15,6 +15,11 @@ if [ -f /root/.bash_history_persistent ]; then
     ln -sf /root/.bash_history_persistent /root/.bash_history
 fi
 
+# Restore Claude configuration on every start
+if [ -f "${WORKSPACE}/.devcontainer/scripts/preserve-claude.sh" ]; then
+    ${WORKSPACE}/.devcontainer/scripts/preserve-claude.sh restore
+fi
+
 # Setup X11 if available
 if [ -n "${DISPLAY:-}" ]; then
     touch ~/.Xauthority 2>/dev/null || true
@@ -69,6 +74,9 @@ elif command -v rocm-smi &> /dev/null; then
 fi
 
 # Check Python environment
-if [ -d "${WORKSPACE}/rocm_venv" ]; then
-    echo "✓ ROCm Python venv available at: ${WORKSPACE}/rocm_venv"
+echo "✓ Using system Python: $(which python3)"
+if python3 -c "import insightface, ultralytics, cv2" &> /dev/null; then
+    echo "✓ All required Python packages available"
+else
+    echo "⚠ Some Python packages may be missing"
 fi

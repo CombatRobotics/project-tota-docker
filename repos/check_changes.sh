@@ -1,6 +1,7 @@
 #!/bin/bash
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repo_root="$(cd "$script_dir/.." && pwd)"
 device_type="controller"
 ws_dir="${repo_root}/ws/${device_type}_ws"
 
