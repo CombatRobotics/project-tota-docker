@@ -9,7 +9,7 @@ CONTROLLER_WS="${WORKSPACE}/ws/controller_ws"
 ROS_DISTRO="humble"
 
 echo "=== Initializing ROS2 Development Environment ==="
-
+    
 # Ensure Claude persistence (will check and restore)
 if [ -f "${WORKSPACE}/.devcontainer/scripts/preserve-claude.sh" ]; then
     ${WORKSPACE}/.devcontainer/scripts/preserve-claude.sh
@@ -21,9 +21,15 @@ if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then
     sudo rosdep init || true
 fi
 
-# Update rosdep
-echo "Updating rosdep..."
-rosdep update --rosdistro ${ROS_DISTRO} || true
+# Update rosdep (with 24hr cache to avoid redundant updates)
+ROSDEP_CACHE="/tmp/rosdep_updated.stamp"
+if [ ! -f "$ROSDEP_CACHE" ] || [ "$(find "$ROSDEP_CACHE" -mmin +1440 2>/dev/null)" ]; then
+    echo "Updating rosdep..."
+    rosdep update --rosdistro ${ROS_DISTRO} || true
+    touch "$ROSDEP_CACHE"
+else
+    echo "Rosdep recently updated, skipping..."
+fi
 
 # Import repositories from ally.repos if it exists
 if [ -f "${WORKSPACE}/repos/ally.repos" ]; then
@@ -47,15 +53,18 @@ if [ -f "${WORKSPACE}/repos/ally.repos" ]; then
 
     echo "Building controller workspace..."
     source /opt/ros/humble/setup.bash
-    # Ensure correct package versions for colcon build
-    pip3 install "setuptools<76" "packaging==23.2" --quiet
 
     # Set numpy include path for ROS2 interface compilation
     export NUMPY_INCLUDE_PATH="/usr/local/lib/python3.10/dist-packages/numpy/core/include"
     export CFLAGS="-I${NUMPY_INCLUDE_PATH}"
     export CPPFLAGS="-I${NUMPY_INCLUDE_PATH}"
 
-    colcon build --symlink-install || true
+    # Build with parallel workers and optimization
+    colcon build --symlink-install \
+                 --parallel-workers $(nproc) \
+                 --cmake-args -DCMAKE_BUILD_TYPE=Release \
+                              -DCMAKE_CXX_FLAGS="-O2" \
+                 --event-handlers console_direct+ || true
 fi
 
 # Install dependencies for main workspace if src exists
@@ -67,15 +76,18 @@ if [ -d "${WORKSPACE}/src" ] && [ "$(ls -A ${WORKSPACE}/src 2>/dev/null)" ]; the
     echo "Building main workspace..."
     source /opt/ros/humble/setup.bash
     [ -f "${CONTROLLER_WS}/install/setup.bash" ] && source "${CONTROLLER_WS}/install/setup.bash"
-    # Ensure correct package versions for colcon build
-    pip3 install "setuptools<76" "packaging==23.2" --quiet
 
     # Set numpy include path for ROS2 interface compilation
     export NUMPY_INCLUDE_PATH="/usr/local/lib/python3.10/dist-packages/numpy/core/include"
     export CFLAGS="-I${NUMPY_INCLUDE_PATH}"
     export CPPFLAGS="-I${NUMPY_INCLUDE_PATH}"
 
-    colcon build --symlink-install || true
+    # Build with parallel workers and optimization
+    colcon build --symlink-install \
+                 --parallel-workers $(nproc) \
+                 --cmake-args -DCMAKE_BUILD_TYPE=Release \
+                              -DCMAKE_CXX_FLAGS="-O2" \
+                 --event-handlers console_direct+ || true
 fi
 
 # Setup Cyclone DDS configuration
@@ -121,17 +133,8 @@ if ! groups | grep -q render; then
     sudo usermod -a -G render $(whoami)
 fi
 
-# Setup comprehensive Python environment for TOTA
-echo "Setting up Python environment for TOTA project..."
-if [ -f "${WORKSPACE}/.devcontainer/scripts/setup-python-env.sh" ]; then
-    echo "Running comprehensive Python dependency installation..."
-    bash "${WORKSPACE}/.devcontainer/scripts/setup-python-env.sh"
-else
-    echo "Python environment script not found, installing basic dependencies..."
-    pip3 install --root-user-action=ignore --no-cache-dir "setuptools<76" "packaging==23.2"
-    if [ -f "${WORKSPACE}/.devcontainer/requirements.txt" ]; then
-        pip3 install --root-user-action=ignore --no-cache-dir -r "${WORKSPACE}/.devcontainer/requirements.txt"
-    fi
-fi
+# Python environment already setup in Dockerfile during build
+# Skip redundant installation - saves 10+ minutes
+echo "Python environment already configured during container build"
 
 echo "DevContainer initialization complete!"
