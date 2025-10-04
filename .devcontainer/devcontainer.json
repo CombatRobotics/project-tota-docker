@@ -18,12 +18,10 @@
         "--gpus=all",
         "--device=/dev/dri",
         "--device=/dev/kfd",
-        "--device=/dev/bus/usb",
         "--group-add=video",
         "--ipc=host",
         "--shm-size=16g",
         "--cap-add=SYS_PTRACE",
-        "--cap-add=NET_ADMIN",
         "--security-opt=seccomp=unconfined"
     ],
 

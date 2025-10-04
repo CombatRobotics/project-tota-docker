@@ -33,7 +33,7 @@ RUN chmod +x ${WORKSPACE_PATH}/.devcontainer/scripts/*.sh && \
     ${WORKSPACE_PATH}/.devcontainer/scripts/setup-wfb.sh
 
 # Create additional workspace directories
-RUN mkdir -p ${WORKSPACE_PATH}/{logs,data}
+RUN mkdir -p ${WORKSPACE_PATH}/{src,logs,data}
 
 # Copy runtime scripts
 COPY scripts/post-create.sh scripts/post-start.sh ${WORKSPACE_PATH}/.devcontainer/scripts/
