@@ -123,17 +123,6 @@ if ! groups | grep -q render; then
     sudo usermod -a -G render $(whoami)
 fi
 
-# Setup comprehensive Python environment for TOTA
-echo "Setting up Python environment for TOTA project..."
-if [ -f "${WORKSPACE}/.devcontainer/scripts/setup-python-env.sh" ]; then
-    echo "Running comprehensive Python dependency installation..."
-    bash "${WORKSPACE}/.devcontainer/scripts/setup-python-env.sh"
-else
-    echo "Python environment script not found, installing basic dependencies..."
-    pip3 install --root-user-action=ignore --no-cache-dir "setuptools<76" "packaging==23.2"
-    if [ -f "${WORKSPACE}/.devcontainer/requirements.txt" ]; then
-        pip3 install --root-user-action=ignore --no-cache-dir -r "${WORKSPACE}/.devcontainer/requirements.txt"
-    fi
-fi
+# Python environment already configured in Dockerfile during build (line 37)
 
 echo "DevContainer initialization complete!"
