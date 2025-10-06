@@ -25,6 +25,10 @@ fi
 echo "Updating rosdep..."
 rosdep update --rosdistro ${ROS_DISTRO} || true
 
+# Update apt cache
+echo "Updating apt cache..."
+sudo apt-get update -qq
+
 # Import repositories from ally.repos if it exists
 if [ -f "${WORKSPACE}/repos/ally.repos" ]; then
     echo "Importing repositories from ally.repos..."
@@ -43,13 +47,13 @@ if [ -f "${WORKSPACE}/repos/ally.repos" ]; then
     # Install dependencies and build controller workspace
     cd "${CONTROLLER_WS}"
     echo "Installing dependencies for controller workspace..."
-    sudo apt-get update -qq
     rosdep install --from-paths src --ignore-src -r -y || true
 
     echo "Building controller workspace..."
     source /opt/ros/humble/setup.bash
     # Ensure correct package versions for colcon build
-    pip3 install "setuptools<76" "packaging==23.2" --quiet
+    python3 -c "import setuptools; exit(0 if int(setuptools.__version__.split('.')[0]) < 76 else 1)" 2>/dev/null || \
+        pip3 install "setuptools<76" "packaging==23.2" --quiet
 
     # Set numpy include path for ROS2 interface compilation
     export NUMPY_INCLUDE_PATH="/usr/local/lib/python3.10/dist-packages/numpy/core/include"
@@ -63,14 +67,14 @@ fi
 if [ -d "${WORKSPACE}/src" ] && [ "$(ls -A ${WORKSPACE}/src 2>/dev/null)" ]; then
     echo "Installing ROS dependencies for main workspace..."
     cd ${WORKSPACE}
-    sudo apt-get update -qq
     rosdep install --from-paths src --ignore-src -r -y || true
 
     echo "Building main workspace..."
     source /opt/ros/humble/setup.bash
     [ -f "${CONTROLLER_WS}/install/setup.bash" ] && source "${CONTROLLER_WS}/install/setup.bash"
     # Ensure correct package versions for colcon build
-    pip3 install "setuptools<76" "packaging==23.2" --quiet
+    python3 -c "import setuptools; exit(0 if int(setuptools.__version__.split('.')[0]) < 76 else 1)" 2>/dev/null || \
+        pip3 install "setuptools<76" "packaging==23.2" --quiet
 
     # Set numpy include path for ROS2 interface compilation
     export NUMPY_INCLUDE_PATH="/usr/local/lib/python3.10/dist-packages/numpy/core/include"
