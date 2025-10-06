@@ -43,6 +43,7 @@ if [ -f "${WORKSPACE}/repos/ally.repos" ]; then
     # Install dependencies and build controller workspace
     cd "${CONTROLLER_WS}"
     echo "Installing dependencies for controller workspace..."
+    sudo apt-get update -qq
     rosdep install --from-paths src --ignore-src -r -y || true
 
     echo "Building controller workspace..."
@@ -62,6 +63,7 @@ fi
 if [ -d "${WORKSPACE}/src" ] && [ "$(ls -A ${WORKSPACE}/src 2>/dev/null)" ]; then
     echo "Installing ROS dependencies for main workspace..."
     cd ${WORKSPACE}
+    sudo apt-get update -qq
     rosdep install --from-paths src --ignore-src -r -y || true
 
     echo "Building main workspace..."
