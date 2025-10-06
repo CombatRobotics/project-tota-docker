@@ -27,10 +27,16 @@ COPY packages.txt requirements.txt ${WORKSPACE_PATH}/.devcontainer/
 COPY scripts/install-deps.sh scripts/setup-python-env.sh scripts/setup-wfb.sh ${WORKSPACE_PATH}/.devcontainer/scripts/
 
 # Run installation scripts
-RUN chmod +x ${WORKSPACE_PATH}/.devcontainer/scripts/*.sh && \
-    ${WORKSPACE_PATH}/.devcontainer/scripts/install-deps.sh && \
-    ${WORKSPACE_PATH}/.devcontainer/scripts/setup-python-env.sh && \
-    ${WORKSPACE_PATH}/.devcontainer/scripts/setup-wfb.sh
+RUN chmod +x ${WORKSPACE_PATH}/.devcontainer/scripts/*.sh
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    ${WORKSPACE_PATH}/.devcontainer/scripts/install-deps.sh
+
+RUN --mount=type=cache,target=/root/.cache/pip \
+    ${WORKSPACE_PATH}/.devcontainer/scripts/setup-python-env.sh
+
+RUN ${WORKSPACE_PATH}/.devcontainer/scripts/setup-wfb.sh
 
 # Create additional workspace directories
 RUN mkdir -p ${WORKSPACE_PATH}/{src,logs,data}
