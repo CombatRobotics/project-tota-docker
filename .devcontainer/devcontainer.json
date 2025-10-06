@@ -16,8 +16,6 @@
         "--network=host",
         "--privileged",
         "--gpus=all",
-        "--device=/dev/dri",
-        "--device=/dev/kfd",
         "--group-add=video",
         "--ipc=host",
         "--shm-size=16g",
