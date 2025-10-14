@@ -8,6 +8,10 @@ ARG WORKSPACE_PATH=/ros2_ws/project_tota
 ARG ROS_DOMAIN_ID=0
 ARG ROS_LOCALHOST_ONLY=0
 ARG INSTALL_CLAUDE=true
+ARG USERNAME=devuser
+
+# Switch to root for installations
+USER root
 
 # Environment
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -20,7 +24,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PROJECT_TOTA_PATH=${WORKSPACE_PATH}
 
 # Create workspace structure early
-RUN mkdir -p ${WORKSPACE_PATH}/.devcontainer/scripts
+RUN mkdir -p ${WORKSPACE_PATH}/.devcontainer/scripts && \
+    chown -R ${USERNAME}:${USERNAME} ${WORKSPACE_PATH}
 
 # Copy all build-time files to workspace
 COPY packages.txt requirements.txt ${WORKSPACE_PATH}/.devcontainer/
@@ -45,6 +50,12 @@ RUN mkdir -p ${WORKSPACE_PATH}/{src,logs,data}
 COPY scripts/post-create.sh scripts/post-start.sh ${WORKSPACE_PATH}/.devcontainer/scripts/
 RUN chmod +x ${WORKSPACE_PATH}/.devcontainer/scripts/*.sh
 
+# Set proper ownership for all workspace files
+RUN chown -R ${USERNAME}:${USERNAME} ${WORKSPACE_PATH}
+
+# Switch back to non-root user
+USER ${USERNAME}
+
 # Set working directory
 WORKDIR ${WORKSPACE_PATH}
 
@@ -52,6 +63,6 @@ WORKDIR ${WORKSPACE_PATH}
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD [ -f /opt/ros/humble/setup.bash ] || exit 1
 
-# Default entrypoint
-ENTRYPOINT ["/bin/bash"]
-CMD ["-l"]
+# Default command
+SHELL ["/bin/bash", "-c"]
+CMD ["/bin/bash"]

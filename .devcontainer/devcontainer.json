@@ -35,10 +35,10 @@
     "mounts": [
         "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind",
         "source=/dev,target=/dev,type=bind",
-        "source=tota-claude-config,target=/root/.config/claude,type=volume",
-        "source=tota-claude-data,target=/root/.local/share/claude,type=volume",
-        "source=tota-claude-cache,target=/root/.cache/claude,type=volume",
-        "source=tota-bash-history,target=/root/.bash_history_persistent,type=volume"
+        "source=tota-claude-config,target=/home/devuser/.config/claude,type=volume",
+        "source=tota-claude-data,target=/home/devuser/.local/share/claude,type=volume",
+        "source=tota-claude-cache,target=/home/devuser/.cache/claude,type=volume",
+        "source=tota-bash-history,target=/home/devuser/.bash_history_persistent,type=volume"
     ],
 
     "postCreateCommand": "/ros2_ws/project_tota/.devcontainer/scripts/post-create.sh",
@@ -58,5 +58,5 @@
         }
     },
 
-    "remoteUser": "root"
+    "remoteUser": "devuser"
 }

@@ -6,13 +6,14 @@ set -e
 # Constants
 WORKSPACE="/ros2_ws/project_tota"
 CONTROLLER_WS="${WORKSPACE}/ws/controller_ws"
+USER_HOME="${HOME:-/home/devuser}"
 
 # Export PROJECT_TOTA_PATH for launch files
 export PROJECT_TOTA_PATH="${WORKSPACE}"
 
 # Link persistent bash history if it exists
-if [ -f /root/.bash_history_persistent ]; then
-    ln -sf /root/.bash_history_persistent /root/.bash_history
+if [ -f ${USER_HOME}/.bash_history_persistent ]; then
+    ln -sf ${USER_HOME}/.bash_history_persistent ${USER_HOME}/.bash_history
 fi
 
 # Restore Claude configuration on every start
@@ -23,7 +24,7 @@ fi
 # Setup X11 if available
 if [ -n "${DISPLAY:-}" ]; then
     touch ~/.Xauthority 2>/dev/null || true
-    xhost +local:root 2>/dev/null || true
+    xhost +local:docker 2>/dev/null || xhost +local:$(whoami) 2>/dev/null || true
 fi
 
 # Source ROS and workspaces if built
