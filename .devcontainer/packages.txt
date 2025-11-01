@@ -1,33 +1,28 @@
-# Essential ROS2 packages
+# Visualization and GUI tools
+ros-humble-rviz2
+ros-humble-rqt
+ros-humble-rqt-common-plugins
+ros-humble-plotjuggler-ros
 
-# Navigation & SLAM
-ros-humble-navigation2
-ros-humble-nav2-bringup
-ros-humble-slam-toolbox
-ros-humble-robot-localization
+# TF and transforms
+ros-humble-tf2-tools
+ros-humble-tf-transformations
 
-# Teleoperation
+# Teleop packages
 ros-humble-teleop-twist-keyboard
 ros-humble-teleop-twist-joy
-ros-humble-twist-mux
-ros-humble-joy
 
-# Perception
-ros-humble-vision-opencv
-ros-humble-usb-cam
-
-# Diagnostics
-ros-humble-diagnostic-aggregator
-
-# Web interface (use available packages)
-ros-humble-rosbridge-msgs
-ros-humble-rosapi
-ros-humble-rosapi-msgs
-
-# Joint state publisher (use available package)
-ros-humble-joint-state-publisher
+# General ROS tools
+ros-humble-realtime-tools
+ros-humble-control-toolbox
 ros-humble-joint-state-publisher-gui
 
-# DDS Middleware
-ros-humble-cyclonedds
-ros-humble-rmw-cyclonedds-cpp
+# Development tools (uncomment if needed)
+vim
+nano
+# htop
+# net-tools
+# iputils-ping
+
+# Additional system packages
+software-properties-common

@@ -1,0 +1,110 @@
+# syntax=docker/dockerfile:1.4
+
+ARG DEV_IMAGE=ros-dev:amd64
+FROM ${DEV_IMAGE} AS full
+
+ARG TARGETARCH
+ARG GZ_ROS2_CONTROL_WS=/opt/gz_ros2_control_ws
+ARG USERNAME=devuser
+ARG WORKSPACE_PATH=/ws
+ARG INSTALL_CLAUDE=false
+ARG FIX_QT_FLICKERING=true
+ARG ROS_DOMAIN_ID=0
+ARG ROS_LOCALHOST_ONLY=0
+
+# Switch to root for installations
+USER root
+
+# Copy packages list
+COPY packages.txt /tmp/packages.txt
+
+# Install all packages from packages.txt
+# Simply comment/uncomment lines in packages.txt to control what gets installed
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked <<'EOF'
+set -euo pipefail
+rm -f /var/lib/dpkg/lock-frontend /var/cache/apt/archives/lock
+apt-get update
+export DEBIAN_FRONTEND=noninteractive
+mapfile -t pkgs < <(grep -Ev '^[[:space:]]*($|#)' /tmp/packages.txt)
+if [ "${#pkgs[@]}" -gt 0 ]; then
+    apt-get install -y --no-install-recommends "${pkgs[@]}"
+fi
+rm -rf /var/lib/apt/lists/* /tmp/packages.txt
+EOF
+
+# Claude AI Assistant (Optional)
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    bash -c 'set -euo pipefail; \
+    if [ "$INSTALL_CLAUDE" = "true" ]; then \
+        rm -f /var/lib/dpkg/lock-frontend /var/cache/apt/archives/lock && \
+        export DEBIAN_FRONTEND=noninteractive && \
+        curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+        apt-get install -y nodejs && \
+        npm install -g @anthropic-ai/claude-code && \
+        rm -rf /var/lib/apt/lists/*; \
+    fi'
+
+# Workspace Setup
+RUN mkdir -p ${WORKSPACE_PATH} && \
+    chown -R ${USERNAME}:${USERNAME} ${WORKSPACE_PATH}
+
+RUN rm -rf /workspace && ln -s ${WORKSPACE_PATH} /workspace
+
+# Environment Configuration (extends base image environment)
+RUN <<EOF
+set -euo pipefail
+cat <<BASE >> /home/${USERNAME}/.bashrc
+
+# Source local workspace if it exists
+if [ -f ${WORKSPACE_PATH}/install/setup.bash ]; then
+    source ${WORKSPACE_PATH}/install/setup.bash
+fi
+
+# ROS configuration
+export ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
+export ROS_LOCALHOST_ONLY=${ROS_LOCALHOST_ONLY}
+
+# Display configuration
+export DISPLAY=\${DISPLAY:-:0}
+export QT_X11_NO_MITSHM=1
+export QT_QPA_PLATFORM=xcb
+
+# Build configuration (for reference)
+export INSTALL_CLAUDE=${INSTALL_CLAUDE}
+export FIX_QT_FLICKERING=${FIX_QT_FLICKERING}
+BASE
+
+if [ "$TARGETARCH" = "amd64" ]; then
+cat <<AMD64 >> /home/${USERNAME}/.bashrc
+
+# Workspace paths
+export GZ_SIM_RESOURCE_PATH=${GZ_ROS2_CONTROL_WS}/install/share:${WORKSPACE_PATH}/install/share:${WORKSPACE_PATH}/src:\$GZ_SIM_RESOURCE_PATH
+AMD64
+fi
+
+if [ "$TARGETARCH" = "amd64" ] && [ "$FIX_QT_FLICKERING" = "true" ]; then
+cat <<'QT' >> /home/${USERNAME}/.bashrc
+
+# Qt Scene Graph fix for Gazebo GUI flickering
+export QSG_RENDER_LOOP=basic
+QT
+fi
+EOF
+
+RUN echo "cd ${WORKSPACE_PATH}" >> /home/${USERNAME}/.bashrc
+
+# Switch back to non-root user
+USER ${USERNAME}
+
+WORKDIR ${WORKSPACE_PATH}
+
+SHELL ["/bin/bash", "-c"]
+CMD ["/bin/bash"]
+
+FROM full AS tota
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+ENV DEBIAN_FRONTEND=

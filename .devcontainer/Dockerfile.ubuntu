@@ -1,0 +1,91 @@
+# syntax=docker/dockerfile:1.4
+
+ARG UBUNTU_IMAGE=ubuntu:22.04
+FROM ${UBUNTU_IMAGE} AS ubuntu_base
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        locales \
+        tzdata && \
+    ln -fs /usr/share/zoneinfo/Etc/UTC /etc/localtime && \
+    locale-gen en_US.UTF-8 && \
+    update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 && \
+    dpkg-reconfigure --frontend noninteractive tzdata && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        gnupg2 \
+        lsb-release \
+        software-properties-common \
+        sudo \
+        wget && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV DEBIAN_FRONTEND=
+
+FROM ubuntu_base AS ubuntu_cv
+
+ARG CV_USE_CUDA=true
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        python3 \
+        python3-pip \
+        python3-venv \
+        python3-dev \
+        git \
+        build-essential \
+        cmake \
+        pkg-config \
+        libopencv-dev \
+        libjpeg-dev \
+        libpng-dev \
+        libtiff-dev \
+        libopenblas-dev \
+        libssl-dev \
+        libffi-dev \
+        ffmpeg \
+        libsm6 \
+        libxext6 \
+        libgl1; \
+    if [ "${CV_USE_CUDA}" = "true" ]; then \
+        apt-get install -y --no-install-recommends nvidia-cuda-toolkit; \
+    fi; \
+    rm -rf /var/lib/apt/lists/*
+
+RUN set -eux; \
+    update-alternatives --install /usr/bin/python python /usr/bin/python3 1; \
+    python3 -m pip install --no-cache-dir --upgrade pip; \
+    if [ "${CV_USE_CUDA}" = "true" ]; then \
+        python3 -m pip install --no-cache-dir \
+            --extra-index-url https://download.pytorch.org/whl/cu118 \
+            torch \
+            torchvision \
+            torchaudio \
+            onnxruntime-gpu; \
+    else \
+        python3 -m pip install --no-cache-dir \
+            torch \
+            torchvision \
+            torchaudio \
+            onnxruntime; \
+    fi; \
+    python3 -m pip install --no-cache-dir \
+        ultralytics \
+        opencv-python \
+        scipy \
+        scikit-image \
+        pillow
+
+ENV DEBIAN_FRONTEND=

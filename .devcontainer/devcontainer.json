@@ -1,62 +1,62 @@
 {
-    "name": "TOTA ROS2 Development",
+    "name": "Humble Harmonic",
     "build": {
-        "dockerfile": "Dockerfile",
+        "dockerfile": "Dockerfile.full",
         "context": ".",
         "args": {
-            "BASE_IMAGE": "ghcr.io/combatrobotics/ros-humble-gz-base:latest",
-            "INSTALL_CLAUDE": "true"
-        }
+            "UBUNTU_IMAGE": "ubuntu:22.04",
+            "UBUNTU_TAG": "ubuntu-cv:latest",
+            "BASE_IMAGE": "ros-base:amd64",
+            "DEV_IMAGE": "ros-dev:amd64",
+            "TARGETARCH": "amd64",
+            "WORKSPACE_PATH": "/ros2ws",
+            "GZ_ROS2_CONTROL_WS": "/opt/gz_ros2_control_ws",
+            "INSTALL_CLAUDE": "false",
+            "FIX_QT_FLICKERING": "false",
+            "ROS_DOMAIN_ID": "0",
+            "ROS_LOCALHOST_ONLY": "0",
+            "USERNAME": "user",
+            "USER_UID": "1000",
+            "USER_GID": "1000",
+            "ENABLE_CV": "true",
+            "CV_USE_CUDA": "true"
+        },
+        "target": "tota"
     },
-
-    "workspaceFolder": "/ros2_ws/project_tota",
-    "workspaceMount": "source=${localWorkspaceFolder},target=/ros2_ws/project_tota,type=bind",
-
-    "runArgs": [
-        "--network=host",
-        "--privileged",
-        "--gpus=all",
-        "--group-add=video",
-        "--ipc=host",
-        "--shm-size=16g",
-        "--cap-add=SYS_PTRACE",
-        "--security-opt=seccomp=unconfined"
+    "initializeCommand": [
+        "/bin/bash",
+        "-lc",
+        "docker builder prune -af >/dev/null 2>&1 || true; .devcontainer/scripts/build-images.sh"
     ],
-
-    "containerEnv": {
-        "DISPLAY": "${localEnv:DISPLAY}",
-        "RMW_IMPLEMENTATION": "rmw_cyclonedds_cpp",
-        "CYCLONEDDS_URI": "file:///ros2_ws/project_tota/cyclonedds.xml",
-        "HSA_OVERRIDE_GFX_VERSION": "11.0.2",
-        "ROCR_VISIBLE_DEVICES": "${localEnv:ROCR_VISIBLE_DEVICES}",
-        "HIP_VISIBLE_DEVICES": "${localEnv:HIP_VISIBLE_DEVICES}"
-    },
-
-    "mounts": [
-        "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind",
-        "source=/dev,target=/dev,type=bind",
-        "source=tota-claude-config,target=/home/devuser/.config/claude,type=volume",
-        "source=tota-claude-data,target=/home/devuser/.local/share/claude,type=volume",
-        "source=tota-claude-cache,target=/home/devuser/.cache/claude,type=volume",
-        "source=tota-bash-history,target=/home/devuser/.bash_history_persistent,type=volume"
-    ],
-
-    "postCreateCommand": "/ros2_ws/project_tota/.devcontainer/scripts/post-create.sh",
-    "postStartCommand": "/ros2_ws/project_tota/.devcontainer/scripts/post-start.sh",
-
+    "workspaceFolder": "/ros2ws",
+    "workspaceMount": "source=${localWorkspaceFolder},target=${containerWorkspaceFolder},type=bind",
     "customizations": {
         "vscode": {
-            "extensions": [
-                "ms-python.python",
-                "ms-vscode.cpptools",
-                "ms-iot.vscode-ros"
-            ],
             "settings": {
-                "python.defaultInterpreterPath": "/usr/bin/python3",
-                "ros.distro": "humble"
+                "terminal.integrated.cwd": "${workspaceFolder}"
             }
         }
     },
-
-    "remoteUser": "devuser"
+    "runArgs": [
+        "--gpus=all",
+        "--network=host",
+        "--privileged",
+        "--ipc=host",
+        "--pid=host"
+    ],
+    "containerEnv": {
+        "DISPLAY": "${localEnv:DISPLAY}",
+        "GZ_VERSION": "harmonic",
+        "NVIDIA_VISIBLE_DEVICES": "all",
+        "NVIDIA_DRIVER_CAPABILITIES": "compute,utility,graphics"
+    },
+    "mounts": [
+        "type=bind,source=/tmp/.X11-unix,target=/tmp/.X11-unix,consistency=cached",
+        "type=bind,source=/dev/dri,target=/dev/dri",
+        "source=claude-config,target=${containerWorkspaceFolder}/.claude-config,type=volume"
+    ],
+    "postCreateCommand": "sudo apt-get update && echo 'ROS2 Humble + Gazebo Harmonic + gz_ros2_control ready!'",
+    "postStartCommand": "touch ~/.Xauthority && xhost +local: 2>/dev/null || true",
+    "remoteUser": "user",
+    "containerWorkspaceFolder": "/ros2ws"
 }
