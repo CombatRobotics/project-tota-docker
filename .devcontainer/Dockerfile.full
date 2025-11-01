@@ -154,7 +154,20 @@ apt-get install -y --no-install-recommends \
     python3-all \
     libsodium-dev \
     python3-venv \
-    git
+    git \
+    build-essential \
+    pkg-config \
+    libevent-dev \
+    libgstrtspserver-1.0-dev \
+    python3-msgpack \
+    python3-serial \
+    python3-jinja2 \
+    python3-yaml \
+    python3-pip \
+    libnl-3-dev \
+    libnl-genl-3-dev \
+    iw \
+    socat
 rm -rf /var/lib/apt/lists/*
 EOF
 
@@ -200,6 +213,16 @@ fi
 if [ ! -d wfb-ng ]; then
     git clone --depth=1 --branch stable https://github.com/svpcom/wfb-ng.git
 fi
+EOF
+
+# Build and install wfb-ng binaries and CLI tooling
+RUN <<'EOF'
+set -euo pipefail
+cd /opt/tota_gs/wfb-ng
+make -j"$(nproc)" all_bin wfb_rtsp
+eval "$(make version | tr -d '\r' | sed 's/^/export /')"
+python3 -m pip install --no-cache-dir --no-deps .
+make clean
 EOF
 
 COPY requirements.txt /tmp/requirements.txt
