@@ -26,7 +26,7 @@
     "initializeCommand": [
         "/bin/bash",
         "-lc",
-        "docker builder prune -af >/dev/null 2>&1 || true; .devcontainer/scripts/build-images.sh"
+        ".devcontainer/scripts/build-images.sh"
     ],
     "workspaceFolder": "/ros2ws",
     "workspaceMount": "source=${localWorkspaceFolder},target=${containerWorkspaceFolder},type=bind",

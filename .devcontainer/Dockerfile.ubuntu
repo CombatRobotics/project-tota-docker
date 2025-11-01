@@ -60,7 +60,8 @@ RUN set -eux; \
         libxext6 \
         libgl1; \
     if [ "${CV_USE_CUDA}" = "true" ]; then \
-        apt-get install -y --no-install-recommends nvidia-cuda-toolkit; \
+        apt-get install -y --no-install-recommends \
+        nvidia-cuda-toolkit; \
     fi; \
     rm -rf /var/lib/apt/lists/*
 
