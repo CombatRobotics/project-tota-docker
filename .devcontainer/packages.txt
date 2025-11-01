@@ -4,13 +4,30 @@ ros-humble-rqt
 ros-humble-rqt-common-plugins
 ros-humble-plotjuggler-ros
 
+# Networking / API bridges
+ros-humble-rosbridge-suite
+ros-humble-rosbridge-server
+ros-humble-rosbridge-library
+ros-humble-rosbridge-msgs
+ros-humble-rosapi
+ros-humble-rosapi-msgs
+
 # TF and transforms
 ros-humble-tf2-tools
 ros-humble-tf-transformations
 
+# Motion and mux
+ros-humble-twist-mux
+ros-humble-twist-mux-msgs
+ros-humble-diagnostic-updater
+
 # Teleop packages
 ros-humble-teleop-twist-keyboard
 ros-humble-teleop-twist-joy
+
+# Localization
+ros-humble-robot-localization
+ros-humble-geographic-msgs
 
 # General ROS tools
 ros-humble-realtime-tools
