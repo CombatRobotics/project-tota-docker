@@ -1,0 +1,11 @@
+numpy<2
+opencv-python
+PyYAML
+psutil
+pyserial
+matplotlib
+open3d
+torch
+torchvision
+torchaudio
+insightface
